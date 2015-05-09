@@ -19,14 +19,16 @@ def split_list(alist, wanted_parts=1):
         for i in range(wanted_parts) ]
 
 def calcsift(l):
+    # @param l = [dirname,image_path_lists]
     #read image and calc SIFT
     start = time.time()
     d,files = l
     fail = 0
     fail_list = []
+    nosift = 0
+    nosift_list = []
     succ = 0
     sift = cv2.SIFT()
-    result = []
     for f in files:
         img = cv2.imread(f)
         if img.size == 0 :
@@ -34,17 +36,26 @@ def calcsift(l):
             fail_list.append(f)
             continue
         kp,des = sift.detectAndCompute(img,None)
-        result.append(des)
-        succ += 1
+        if des is not None:
+            succ += 1
+            temp = '[' + os.path.dirname(f).replace('/','-') + ']'
+            temp += os.path.basename(f) + '.sift'
+            cPickle.dump(des,open(os.path.join(d,temp),'wb'), -1)
+        else:
+            nosift +=1
+            nosift_list.append(f)
     
-    cPickle.dump(result,open(os.path.join(d,str(os.getpid())),'wb'),-1)
-
+        
     for t in range(50):
         sys.stdout.write('=')
     print ''
     print 'pid:', os.getpid(), ' ppid:', os.getppid()    
-    print 'total: ', succ+fail, '\tfail\t', fail
+    print 'total:\t', succ+fail+nosift
+    print 'fail:\t', fail
     for t in fail_list:
+        print t
+    print 'no sift:', nosift
+    for t in nosift_list:
         print t
     print 'time elapsed:', time.time() - start
     for t in range(50):
