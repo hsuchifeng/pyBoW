@@ -31,7 +31,7 @@ def calcsift(l):
     sift = cv2.SIFT()
     for f in files:
         img = cv2.imread(f)
-        if img.size == 0 :
+        if img is None:
             fail += 1
             fail_list.append(f)
             continue
