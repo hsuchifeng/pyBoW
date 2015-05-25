@@ -54,17 +54,21 @@ if __name__ == "__main__":
             hist_img.append((hist,f))
     print 'total image:' , len(hist_img)
           
-    #create udp server
-    server = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    #create tcp server
+    server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     server.bind(('10.21.25.102',nport))
+    server.listen(10)
     #deal request
     while True:
+       
+        #accept request and receive file
+        sock,addr = server.accept()
         img_path  = tempfile.mktemp()
         temp = open(img_path,'wb')
-       
-        #receive file
-        data,addr = server.recvfrom(8*1024*1024)
-        temp.write(data)
+        data= sock.recv(1024)
+        while data:
+            temp.write(data)
+            data = sock.recv(1024)
         temp.close()
 
         #gen image-to-match hist
@@ -99,10 +103,9 @@ if __name__ == "__main__":
         im = im.resize((int(im.size[0]*p),h),Image.ANTIALIAS)
         res.paste(im,(0,0))
         x = im.size[0] +5
-
+        #gen result
         result = []
         resultf = tempfile.mktemp()
-        #print dist_img[:5]
         for i in range(nresult):
             l = len('256_ObjectCategories')
             t = dist_img[i][1][1:-5]
@@ -118,9 +121,13 @@ if __name__ == "__main__":
         res.save(resultf,'JPEG')
         print result
         
+        #send result
         f = open(resultf,'rb')
-        res = f.read()
-        server.sendto(res,addr)
+        res = f.read(1024)
+        while res:
+            sock.send(res)
+            res = f.read(1024)
+        sock.shutdown(socket.SHUT_WR)
         f.close()
 
         print 'finish'
