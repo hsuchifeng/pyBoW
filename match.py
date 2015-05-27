@@ -11,14 +11,15 @@ from scipy.cluster.vq import vq
 
 def usage():
     print 'match image' 
-    print 'usage: python bow.py [-c centoid file] [-h hist_dir] [-i images_to_match] [-r result_file]'
+    print 'usage: python bow.py [-c centoid file] [-h hist_dir] [-i images_to_match] [-r result_file] [-n nresult]'
 
 if __name__ == "__main__":
-    opts,args=getopt.getopt(sys.argv[1:],"h:c:i:r:")
+    opts,args=getopt.getopt(sys.argv[1:],"h:n:c:i:r:")
     centriod_file=''
     hist_dir = ''
     image_file = '' 
     res_file = ''
+    nresul = 5
     k = 0;
     for op,value in opts:
         if op == '-c':
@@ -27,8 +28,10 @@ if __name__ == "__main__":
             hist_dir= value
         elif op == '-i':
             image_file= value
-        elif op == '-t':
+        elif op == '-r':
             res_file = value
+        elif op == '-n':
+            nresult = int(value)
     if centriod_file== '' or hist_dir == '' or image_file == '':
         usage()
         sys.exit()
@@ -70,19 +73,22 @@ if __name__ == "__main__":
                 sim= 1- scipy.spatial.distance.cosine(h,image_hist)
                 dist_img.append((sim,f))     
             dist_img.sort(key=lambda t: t[0], reverse=True) 
-
+    
+            #get label
             cls =  os.path.basename(os.path.dirname(im))
 
             j = 0.0
-            for i in range(5):
+            #match top-nresult
+            for i in range(nresult):
                 if cls in  dist_img[i][1]:
                     j +=1
+            #prevent no element
             if cls not in map_cls:
                 map_cls[cls] = 0
             map_cls[cls] += j
+    resf = open(res_file,'w')
     result = []
     for k in map_cls:
-        #map_cls[k] /= 25
-        print k, map_cls[k]
-        result.append((k,map_cls[k]))
-    cPickle.dump(result,open(res_file,'wb'),-1)
+        resf.write(k+","+ str(map_cls[k])+'\n')
+        print k,',',map_cls[k]
+    resf.close()

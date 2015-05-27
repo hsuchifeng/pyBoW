@@ -61,7 +61,7 @@ if __name__ == "__main__":
     #k-means
     del feat
     print 'clustering'
-    k_means = cluster.MiniBatchKMeans(n_clusters=k,compute_labels=False)
+    k_means = cluster.MiniBatchKMeans(batch_size=3*k,n_clusters=k,compute_labels=False)
     k_means.fit(feats)
     center = k_means.cluster_centers_ 
     print 'time elapsed for k-means:',time.time()-start
